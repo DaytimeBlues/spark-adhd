@@ -321,6 +321,7 @@
       fogcutterTask: 'spark_fogcutter_task',
       fogcutterSteps: 'spark_fogcutter_steps',
       fogcutterIndex: 'spark_fogcutter_index',
+      fogcutterMotivation: 'spark_fogcutter_motivation',
       streakCount: 'spark_streak_count',
       lastUseDate: 'spark_last_use_date',
       theme: 'spark_theme',
@@ -1980,6 +1981,7 @@
       const [task, setTask] = useState(() => loadState(STORAGE_KEYS.fogcutterTask, ''));
       const [steps, setSteps] = useState(() => loadState(STORAGE_KEYS.fogcutterSteps, []));
       const [currentIndex, setCurrentIndex] = useState(() => loadState(STORAGE_KEYS.fogcutterIndex, 0));
+      const [motivation, setMotivation] = useState(() => loadState(STORAGE_KEYS.fogcutterMotivation, ''));
       const [isComplete, setIsComplete] = useState(false);
       const [showConfetti, setShowConfetti] = useState(false);
       const inputRef = useRef(null);
@@ -1987,6 +1989,7 @@
       useEffect(() => { saveState(STORAGE_KEYS.fogcutterTask, task); }, [task]);
       useEffect(() => { saveState(STORAGE_KEYS.fogcutterSteps, steps); }, [steps]);
       useEffect(() => { saveState(STORAGE_KEYS.fogcutterIndex, currentIndex); }, [currentIndex]);
+      useEffect(() => { saveState(STORAGE_KEYS.fogcutterMotivation, motivation); }, [motivation]);
 
       const generateSteps = () => {
         if (!task.trim()) return;
@@ -2019,6 +2022,7 @@
         setTask('');
         setSteps([]);
         setCurrentIndex(0);
+        setMotivation('');
         setIsComplete(false);
         setShowConfetti(false);
         inputRef.current?.focus();
@@ -2082,6 +2086,23 @@
                   rows={3}
                   autoFocus
                 />
+
+                {/* Motivation Alignment */}
+                <div className="mt-4 bg-caddi-dark/50 border border-caddi-blue/30 rounded-xl p-3">
+                  <label className="text-xs text-caddi-blue font-semibold uppercase tracking-wide">
+                    Why this matters
+                  </label>
+                  <input
+                    type="text"
+                    value={motivation}
+                    onChange={(e) => setMotivation(e.target.value)}
+                    placeholder="e.g., Career growth, family security, proving myself..."
+                    className="w-full mt-2 p-2 bg-transparent text-caddi-light text-sm 
+                      border-b border-caddi-light/20 focus:border-caddi-blue focus:outline-none
+                      placeholder:text-caddi-light/40"
+                  />
+                </div>
+
                 <button
                   onClick={generateSteps}
                   disabled={!task.trim()}
@@ -2095,6 +2116,14 @@
               </>
             ) : (
               <>
+                {/* Motivation Reminder (pinned at top) */}
+                {motivation && (
+                  <div className="bg-caddi-blue/10 border border-caddi-blue/30 rounded-xl px-4 py-2 mb-6 text-center">
+                    <span className="text-xs text-caddi-blue uppercase tracking-wide font-semibold">Why this matters: </span>
+                    <span className="text-caddi-light text-sm">{motivation}</span>
+                  </div>
+                )}
+
                 <p className="text-caddi-light opacity-60 text-sm text-center mb-2">
                   Step {currentIndex + 1} of {steps.length}
                 </p>
