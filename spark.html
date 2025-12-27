@@ -329,6 +329,7 @@
       pomodoroPhase: 'spark_pomodoro_phase',
       pomodoroRemaining: 'spark_pomodoro_remaining',
       pomodoroTarget: 'spark_pomodoro_target',
+      pomodoroDuration: 'spark_pomodoro_duration',
       brainDraft: 'spark_brain_draft',
       brainQueue: 'spark_brain_queue',
       offlineQueue: 'spark_offline_queue',
@@ -683,10 +684,10 @@
     const offlineSync = new OfflineSyncManager();
 
     // ============================================
-    // GOOGLE AUTH + TASKS API
+    // GOOGLE AUTH + TASKS/CALENDAR API
     // ============================================
     const GOOGLE_CLIENT_ID = '474078142013-5hruq35gdk11gmt7drdp0ttnl4f6pqbg.apps.googleusercontent.com';
-    const TASKS_SCOPES = 'https://www.googleapis.com/auth/tasks';
+    const GOOGLE_SCOPES = 'https://www.googleapis.com/auth/tasks https://www.googleapis.com/auth/calendar.readonly';
 
     class GoogleAuthManager {
       constructor() {
@@ -702,11 +703,11 @@
             if (window.google?.accounts?.oauth2) {
               this.tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
-                scope: TASKS_SCOPES,
+                scope: GOOGLE_SCOPES,
                 callback: (tokenResponse) => {
                   if (tokenResponse.access_token) {
                     this.accessToken = tokenResponse.access_token;
-                    this.loadTasksApi();
+                    this.loadApis();
                     this.onAuthChange?.(true);
                   }
                 },
@@ -721,12 +722,13 @@
         });
       }
 
-      async loadTasksApi() {
+      async loadApis() {
         if (!window.gapi) return;
         return new Promise((resolve) => {
           gapi.load('client', async () => {
             await gapi.client.init({});
             await gapi.client.load('tasks', 'v1');
+            await gapi.client.load('calendar', 'v3');
             gapi.client.setToken({ access_token: this.accessToken });
             resolve();
           });
@@ -767,6 +769,26 @@
           },
         });
         return response.result;
+      }
+
+      async getTodayEvents() {
+        if (!this.isSignedIn()) {
+          throw new Error('Not signed in');
+        }
+
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).toISOString();
+
+        const response = await gapi.client.calendar.events.list({
+          calendarId: 'primary',
+          timeMin: startOfDay,
+          timeMax: endOfDay,
+          singleEvents: true,
+          orderBy: 'startTime',
+          maxResults: 20,
+        });
+        return response.result.items || [];
       }
     }
 
@@ -891,7 +913,19 @@
     // TIMER DURATIONS
     // ============================================
     const TIMER_OPTIONS = [2, 5, 10, 15]; // minutes
-    const POMODORO_DEFAULTS = { focusMs: 25 * 60 * 1000, breakMs: 5 * 60 * 1000 };
+
+    const POMODORO_PRESETS = [
+      { label: '25/5', focusMin: 25, breakMin: 5 },
+      { label: '50/10', focusMin: 50, breakMin: 10 },
+      { label: '15/3', focusMin: 15, breakMin: 3 },
+    ];
+
+    const getPomodoroMs = (presetIndex) => {
+      const preset = POMODORO_PRESETS[presetIndex] || POMODORO_PRESETS[0];
+      return { focusMs: preset.focusMin * 60 * 1000, breakMs: preset.breakMin * 60 * 1000 };
+    };
+
+    const POMODORO_DEFAULTS = getPomodoroMs(0); // legacy compatibility
 
     const getInitialPomodoroState = () => {
       const savedPhase = loadState(STORAGE_KEYS.pomodoroPhase, 'focus');
@@ -1056,6 +1090,13 @@
                 onClick={() => setMode('brain')}
               />
               <HomeCard
+                icon="📅"
+                title="WHAT'S ON TODAY?"
+                subtitle="Calendar — Beat time blindness"
+                color="blue"
+                onClick={() => setMode('calendar')}
+              />
+              <HomeCard
                 icon="⚓"
                 title="I'M DRIFTING"
                 subtitle="Anchor — Return to now"
@@ -1065,6 +1106,120 @@
             </div>
 
             <QuoteDisplay quote={getRandomQuote('ignite')} isDark={isDark} />
+          </div>
+        </div>
+      );
+    };
+
+    // Calendar View (Today's Schedule)
+    const CalendarView = ({ setMode }) => {
+      const [events, setEvents] = useState([]);
+      const [isLoading, setIsLoading] = useState(false);
+      const [isSignedIn, setIsSignedIn] = useState(() => googleAuth.isSignedIn());
+      const [quote] = useState(() => getRandomQuote('ignite'));
+
+      useEffect(() => {
+        googleAuth.onAuthChange = (signedIn) => {
+          setIsSignedIn(signedIn);
+          if (signedIn) loadEvents();
+        };
+        if (googleAuth.isSignedIn()) loadEvents();
+      }, []);
+
+      const loadEvents = async () => {
+        setIsLoading(true);
+        try {
+          const todayEvents = await googleAuth.getTodayEvents();
+          setEvents(todayEvents);
+        } catch (e) {
+          pushToast('Could not load calendar events.', 'error');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const handleSignIn = () => {
+        googleAuth.signIn();
+      };
+
+      const formatTime = (dateTime, date) => {
+        if (!dateTime && date) return 'All day';
+        const d = new Date(dateTime);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      };
+
+      const exitToHome = () => setMode('home');
+
+      return (
+        <div className="min-h-screen bg-caddi-charcoal flex flex-col justify-center items-center p-6 fade-in">
+          <button
+            onClick={exitToHome}
+            className="absolute top-6 left-6 text-caddi-light opacity-50 hover:opacity-100 text-sm font-medium"
+          >
+            ← Exit
+          </button>
+          <SoundToggle isDark={true} />
+
+          <div className="w-full max-w-md text-left space-y-6">
+            <div className="space-y-2">
+              <p className="text-caddi-blue text-sm font-bold tracking-widest">TODAY'S SCHEDULE</p>
+              <h2 className="text-3xl font-black text-white leading-tight">What's on today?</h2>
+              <p className="text-caddi-light opacity-70 text-sm">Beat time blindness. Know your anchors.</p>
+            </div>
+
+            {!isSignedIn ? (
+              <div className="bg-caddi-dark border border-white/5 rounded-2xl p-6 text-center space-y-4">
+                <p className="text-caddi-light opacity-80 text-sm">Connect Google Calendar to see today's events.</p>
+                <button
+                  onClick={handleSignIn}
+                  className="btn-juice w-full py-4 bg-caddi-blue text-white font-bold text-lg rounded-xl shadow-lg"
+                >
+                  Sign in with Google
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <div className="text-caddi-light opacity-50">Loading events...</div>
+                  </div>
+                ) : events.length === 0 ? (
+                  <div className="bg-caddi-dark border border-white/5 rounded-2xl p-6 text-center">
+                    <div className="text-4xl mb-3">📭</div>
+                    <p className="text-caddi-light opacity-70">No events today. Clear schedule!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {events.map((event) => (
+                      <div
+                        key={event.id}
+                        className="bg-caddi-dark border border-white/5 rounded-xl p-4 flex items-start gap-3"
+                      >
+                        <div className="text-caddi-blue font-bold text-sm min-w-[60px]">
+                          {formatTime(event.start?.dateTime, event.start?.date)}
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-white font-semibold text-sm">{event.summary || 'Untitled event'}</div>
+                          {event.location && (
+                            <div className="text-caddi-light/60 text-xs mt-1">📍 {event.location}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  onClick={loadEvents}
+                  disabled={isLoading}
+                  className="w-full py-2 text-caddi-blue text-sm font-semibold"
+                >
+                  ↻ Refresh
+                </button>
+              </div>
+            )}
+
+            <QuoteDisplay quote={quote} />
           </div>
         </div>
       );
@@ -1277,38 +1432,47 @@
 
     // Pomodoro View
     const PomodoroView = ({ setMode }) => {
+      const [presetIndex, setPresetIndex] = useState(() => loadState(STORAGE_KEYS.pomodoroDuration, 0));
+      const durations = getPomodoroMs(presetIndex);
+
       const initial = getInitialPomodoroState();
       const [phase, setPhase] = useState(initial.phase);
       const [remainingMs, setRemainingMs] = useState(initial.remainingMs);
       const [targetEnd, setTargetEnd] = useState(initial.targetEnd);
       const [quote] = useState(() => getRandomQuote('ignite'));
       const [isRunning, setIsRunning] = useState(() => Boolean(initial.targetEnd && initial.phase !== 'finished'));
+      const [isPaused, setIsPaused] = useState(false);
+      const [pausedAt, setPausedAt] = useState(null);
 
       useEffect(() => {
         saveState(STORAGE_KEYS.pomodoroPhase, phase);
         saveState(STORAGE_KEYS.pomodoroRemaining, remainingMs);
         saveState(STORAGE_KEYS.pomodoroTarget, targetEnd);
-      }, [phase, remainingMs, targetEnd]);
+        saveState(STORAGE_KEYS.pomodoroDuration, presetIndex);
+      }, [phase, remainingMs, targetEnd, presetIndex]);
 
       const advancePhase = useCallback(() => {
         if (phase === 'focus') {
-          const nextTarget = Date.now() + POMODORO_DEFAULTS.breakMs;
+          const nextTarget = Date.now() + durations.breakMs;
           setPhase('break');
-          setRemainingMs(POMODORO_DEFAULTS.breakMs);
+          setRemainingMs(durations.breakMs);
           setTargetEnd(nextTarget);
           soundFX.tock();
+          pushToast('Break time! Take a rest.', 'info');
         } else {
           setPhase('finished');
           setRemainingMs(0);
           setTargetEnd(null);
           setIsRunning(false);
+          setIsPaused(false);
           soundFX.chime();
           updateStreak();
+          pushToast('Pomodoro complete! Great focus.', 'info');
         }
-      }, [phase]);
+      }, [phase, durations]);
 
       useEffect(() => {
-        if (!isRunning || !targetEnd || phase === 'finished') return;
+        if (!isRunning || isPaused || !targetEnd || phase === 'finished') return;
 
         const interval = setInterval(() => {
           const now = Date.now();
@@ -1323,31 +1487,62 @@
         }, 1000);
 
         return () => clearInterval(interval);
-      }, [isRunning, targetEnd, phase, advancePhase]);
+      }, [isRunning, isPaused, targetEnd, phase, advancePhase]);
 
       const startFocus = () => {
-        const nextTarget = Date.now() + POMODORO_DEFAULTS.focusMs;
+        const nextTarget = Date.now() + durations.focusMs;
         setPhase('focus');
-        setRemainingMs(POMODORO_DEFAULTS.focusMs);
+        setRemainingMs(durations.focusMs);
         setTargetEnd(nextTarget);
         setIsRunning(true);
+        setIsPaused(false);
         soundFX.tock();
+        haptic([50]);
       };
 
       const startBreak = () => {
-        const nextTarget = Date.now() + POMODORO_DEFAULTS.breakMs;
+        const nextTarget = Date.now() + durations.breakMs;
         setPhase('break');
-        setRemainingMs(POMODORO_DEFAULTS.breakMs);
+        setRemainingMs(durations.breakMs);
         setTargetEnd(nextTarget);
         setIsRunning(true);
+        setIsPaused(false);
         soundFX.tock();
+        haptic([50]);
+      };
+
+      const pauseTimer = () => {
+        setPausedAt(Date.now());
+        setIsPaused(true);
+        haptic([30]);
+      };
+
+      const resumeTimer = () => {
+        if (pausedAt && remainingMs > 0) {
+          const newTarget = Date.now() + remainingMs;
+          setTargetEnd(newTarget);
+        }
+        setIsPaused(false);
+        setPausedAt(null);
+        haptic([30]);
       };
 
       const resetPomodoro = () => {
         setPhase('focus');
-        setRemainingMs(POMODORO_DEFAULTS.focusMs);
+        setRemainingMs(durations.focusMs);
         setTargetEnd(null);
         setIsRunning(false);
+        setIsPaused(false);
+        setPausedAt(null);
+      };
+
+      const cycleDuration = () => {
+        if (isRunning) return;
+        const nextIndex = (presetIndex + 1) % POMODORO_PRESETS.length;
+        setPresetIndex(nextIndex);
+        const newDurations = getPomodoroMs(nextIndex);
+        setRemainingMs(phase === 'focus' ? newDurations.focusMs : newDurations.breakMs);
+        haptic([40]);
       };
 
       const formatMs = (ms) => {
@@ -1358,10 +1553,14 @@
       };
 
       const statusLabel = {
-        focus: 'Focus sprint',
-        break: 'Break',
-        finished: 'Finished',
+        focus: isPaused ? 'Focus (paused)' : 'Focus sprint',
+        break: isPaused ? 'Break (paused)' : 'Break time',
+        finished: 'Session complete',
       }[phase];
+
+      const currentPreset = POMODORO_PRESETS[presetIndex];
+      const totalMs = phase === 'break' ? durations.breakMs : durations.focusMs;
+      const progress = Math.min(100, (1 - (remainingMs / totalMs)) * 100);
 
       const exitToHome = () => { setMode('home'); };
 
@@ -1376,25 +1575,38 @@
           <SoundToggle isDark={true} />
 
           <div className="text-center max-w-md w-full">
-            <h2 className="text-caddi-orange text-sm font-bold tracking-widest mb-2">POMODORO</h2>
+            <h2 className="text-caddi-orange text-sm font-bold tracking-widest mb-1">POMODORO</h2>
+
+            {/* Duration Selector */}
+            <button
+              onClick={cycleDuration}
+              disabled={isRunning}
+              className={`text-xs font-semibold px-3 py-1 rounded-full mb-4 transition ${isRunning
+                ? 'bg-caddi-charcoal text-caddi-light/50 cursor-not-allowed'
+                : 'bg-caddi-purple/20 text-caddi-purple hover:bg-caddi-purple/30'
+                }`}
+            >
+              {currentPreset.label} min • tap to change
+            </button>
+
             <p className="text-caddi-light opacity-70 mb-6 text-sm">{statusLabel}</p>
 
-            <div className="text-8xl font-black text-white mb-4 tracking-tight">
-              {formatMs(remainingMs || (phase === 'focus' ? POMODORO_DEFAULTS.focusMs : POMODORO_DEFAULTS.breakMs))}
+            <div className={`text-8xl font-black mb-4 tracking-tight transition-colors ${isPaused ? 'text-caddi-light/50' : 'text-white'}`}>
+              {formatMs(remainingMs || durations.focusMs)}
             </div>
 
             <div className="w-full h-2 bg-caddi-charcoal rounded-full overflow-hidden mb-8">
               <div
-                className="h-full bg-gradient-to-r from-caddi-purple to-caddi-orange transition-all duration-500 ease-linear"
-                style={{
-                  width: `${Math.min(100, (1 - (remainingMs / (phase === 'break' ? POMODORO_DEFAULTS.breakMs : POMODORO_DEFAULTS.focusMs))) * 100)}%`
-                }}
+                className={`h-full transition-all duration-500 ease-linear ${isPaused ? 'bg-caddi-light/30' : 'bg-gradient-to-r from-caddi-purple to-caddi-orange'
+                  }`}
+                style={{ width: `${progress}%` }}
               />
             </div>
 
             <QuoteDisplay quote={quote} />
 
             <div className="space-y-3 mt-6">
+              {/* Not running - show start buttons */}
               {phase === 'focus' && !isRunning && (
                 <button
                   onClick={startFocus}
@@ -1411,19 +1623,46 @@
                   Start Break
                 </button>
               )}
-              {isRunning && (
-                <p className="text-caddi-light opacity-50 text-sm">Running — will switch phases automatically.</p>
+
+              {/* Running - show pause/resume */}
+              {isRunning && !isPaused && phase !== 'finished' && (
+                <button
+                  onClick={pauseTimer}
+                  className="btn-juice w-full py-4 bg-caddi-charcoal border-2 border-caddi-orange text-caddi-orange font-bold text-lg rounded-xl"
+                >
+                  ⏸ Pause
+                </button>
               )}
+              {isRunning && isPaused && phase !== 'finished' && (
+                <button
+                  onClick={resumeTimer}
+                  className="btn-juice w-full py-4 bg-caddi-orange text-white font-bold text-lg rounded-xl shadow-lg shimmer"
+                >
+                  ▶ Resume
+                </button>
+              )}
+
+              {/* Session finished */}
               {phase === 'finished' && (
                 <>
-                  <p className="text-caddi-light opacity-70 text-sm">Session complete.</p>
+                  <p className="text-caddi-light opacity-70 text-sm">Great work! Ready for another?</p>
                   <button
                     onClick={resetPomodoro}
-                    className="btn-juice w-full py-3 bg-transparent border-2 border-white text-white font-medium rounded-xl"
+                    className="btn-juice w-full py-3 bg-caddi-purple text-white font-bold rounded-xl"
                   >
-                    Reset
+                    Start New Session
                   </button>
                 </>
+              )}
+
+              {/* Reset button when running */}
+              {isRunning && (
+                <button
+                  onClick={resetPomodoro}
+                  className="w-full py-2 text-caddi-light/50 hover:text-caddi-light text-sm font-medium"
+                >
+                  Reset
+                </button>
               )}
             </div>
           </div>
@@ -2072,6 +2311,8 @@
             return <PomodoroView setMode={setMode} />;
           case 'brain':
             return <BrainDumpView setMode={setMode} />;
+          case 'calendar':
+            return <CalendarView setMode={setMode} />;
           case 'anchor':
             return <AnchorView setMode={setMode} />;
           default:
