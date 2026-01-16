@@ -1,0 +1,20 @@
+buildscript {
+    ext {
+        buildToolsVersion = "34.0.0"
+        minSdkVersion = 26
+        compileSdkVersion = 34
+        targetSdkVersion = 34
+
+        ndkVersion = "26.1.10909125"
+
+        googlePlayServicesAuthVersion = "21.2.0"
+    }
+}
+
+plugins {
+    id "com.facebook.react" version "0.74.0" apply false
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.buildDir
+}
