@@ -4,18 +4,7 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven {
-            url "$rootDir/../node_modules/react-native/android"
-        }
     }
-}
-
-plugins {
-    id("com.facebook.react.settings")
-}
-
-extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
-    ex.autolinkLibrariesFromCommand()
 }
 
 dependencyResolutionManagement {
@@ -31,3 +20,6 @@ dependencyResolutionManagement {
 
 rootProject.name = 'SparkADHD'
 include ':app'
+
+apply from: new File(rootDir, "../node_modules/@react-native/gradle-plugin/src/main/groovy/com/facebook/react/react-native.gradle")
+applyReactNativeSettings(settings)
