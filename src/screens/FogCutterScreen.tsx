@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   FlatList,
-} from 'react-native';
+} from "react-native";
 
 interface Task {
   id: string;
@@ -17,15 +17,15 @@ interface Task {
 }
 
 const FogCutterScreen = () => {
-  const [task, setTask] = useState('');
+  const [task, setTask] = useState("");
   const [microSteps, setMicroSteps] = useState<string[]>([]);
-  const [newStep, setNewStep] = useState('');
+  const [newStep, setNewStep] = useState("");
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const addMicroStep = () => {
     if (newStep.trim()) {
       setMicroSteps([...microSteps, newStep.trim()]);
-      setNewStep('');
+      setNewStep("");
     }
   };
 
@@ -38,18 +38,24 @@ const FogCutterScreen = () => {
         microSteps: [...microSteps],
       };
       setTasks([...tasks, newTask]);
-      setTask('');
+      setTask("");
       setMicroSteps([]);
     }
   };
 
   const toggleTask = (id: string) => {
     setTasks(
-      tasks.map(t => (t.id === id ? {...t, completed: !t.completed} : t)),
+      tasks.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
     );
   };
 
-  const renderMicroStep = ({item, index}: {item: string; index: number}) => (
+  const renderMicroStep = ({
+    item,
+    index,
+  }: {
+    item: string;
+    index: number;
+  }) => (
     <View style={styles.microStep}>
       <Text style={styles.stepNumber}>{index + 1}</Text>
       <Text style={styles.stepText}>{item}</Text>
@@ -86,9 +92,7 @@ const FogCutterScreen = () => {
 
         {microSteps.length > 0 && (
           <View style={styles.previewContainer}>
-            <Text style={styles.previewTitle}>
-              Micro-steps for "{task}":
-            </Text>
+            <Text style={styles.previewTitle}>Micro-steps for "{task}":</Text>
             <FlatList
               data={microSteps}
               renderItem={renderMicroStep}
@@ -99,23 +103,30 @@ const FogCutterScreen = () => {
         )}
 
         <TouchableOpacity
-          style={[styles.saveButton, microSteps.length === 0 && styles.disabled]}
+          style={[
+            styles.saveButton,
+            microSteps.length === 0 && styles.disabled,
+          ]}
           onPress={addTask}
-          disabled={microSteps.length === 0}>
+          disabled={microSteps.length === 0}
+        >
           <Text style={styles.saveButtonText}>Save Task</Text>
         </TouchableOpacity>
 
         <FlatList
           data={tasks}
-          keyExtractor={item => item.id}
-          renderItem={({item}) => (
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
             <TouchableOpacity
               style={[
                 styles.taskCard,
                 item.completed && styles.taskCardCompleted,
               ]}
-              onPress={() => toggleTask(item.id)}>
-              <Text style={[styles.taskText, item.completed && styles.completed]}>
+              onPress={() => toggleTask(item.id)}
+            >
+              <Text
+                style={[styles.taskText, item.completed && styles.completed]}
+              >
                 {item.text}
               </Text>
               <View style={styles.stepCount}>
@@ -135,7 +146,7 @@ const FogCutterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1A1A2E',
+    backgroundColor: "#1A1A2E",
   },
   content: {
     flex: 1,
@@ -143,100 +154,100 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: '#888',
+    color: "#888",
     marginBottom: 24,
   },
   input: {
-    backgroundColor: '#2D2D44',
+    backgroundColor: "#2D2D44",
     borderRadius: 12,
     padding: 16,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
     marginBottom: 16,
   },
   addStepRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 24,
   },
   stepInput: {
     flex: 1,
-    backgroundColor: '#2D2D44',
+    backgroundColor: "#2D2D44",
     borderRadius: 12,
     padding: 16,
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
     marginRight: 12,
   },
   addButton: {
-    backgroundColor: '#6200EA',
+    backgroundColor: "#6200EA",
     width: 50,
     borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   addButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   previewContainer: {
-    backgroundColor: '#2D2D44',
+    backgroundColor: "#2D2D44",
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
   },
   previewTitle: {
-    color: '#888',
+    color: "#888",
     fontSize: 14,
     marginBottom: 12,
   },
   microStep: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 8,
   },
   stepNumber: {
-    backgroundColor: '#6200EA',
-    color: '#FFFFFF',
+    backgroundColor: "#6200EA",
+    color: "#FFFFFF",
     width: 24,
     height: 24,
     borderRadius: 12,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginRight: 12,
   },
   stepText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 14,
   },
   saveButton: {
-    backgroundColor: '#6200EA',
+    backgroundColor: "#6200EA",
     paddingVertical: 14,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   disabled: {
     opacity: 0.5,
   },
   saveButtonText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   taskList: {
     flex: 1,
   },
   taskCard: {
-    backgroundColor: '#2D2D44',
+    backgroundColor: "#2D2D44",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -245,23 +256,23 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   taskText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 8,
   },
   completed: {
-    textDecorationLine: 'line-through',
+    textDecorationLine: "line-through",
   },
   stepCount: {
-    backgroundColor: '#1A1A2E',
+    backgroundColor: "#1A1A2E",
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   stepCountText: {
-    color: '#888',
+    color: "#888",
     fontSize: 12,
   },
 });
