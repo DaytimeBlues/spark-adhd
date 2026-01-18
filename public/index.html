@@ -4,8 +4,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1a1a2e">
+  <meta name="theme-color" content="#0F111A">
   <title>Spark ADHD</title>
+
+  <!-- Google Font: Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     /* MaterialCommunityIcons font for react-native-vector-icons on web */
     @font-face {
@@ -14,8 +20,7 @@
       font-weight: normal;
       font-style: normal;
     }
-  </style>
-  <style>
+
     html,
     body,
     #root {
@@ -23,8 +28,10 @@
       padding: 0;
       height: 100%;
       width: 100%;
-      background-color: #1a1a2e;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #0F111A;
+      /* modern system fallback if Outfit fails */
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
     }
 
     #root {
@@ -32,36 +39,10 @@
       flex-direction: column;
     }
 
-    /* Pulse animation for HeroStreak */
-    @keyframes pulse {
-      0% {
-        transform: scale(0.8);
-        opacity: 0.6;
-      }
-
-      100% {
-        transform: scale(1.5);
-        opacity: 0;
-      }
-    }
-
-    .pulse-circle {
-      animation: pulse 2s ease-out infinite;
-    }
-
-    #pulse-circle-1 {
-      animation: pulse 2s ease-out infinite;
-      animation-delay: 0s;
-    }
-
-    #pulse-circle-2 {
-      animation: pulse 2s ease-out infinite;
-      animation-delay: 0.4s;
-    }
-
-    #pulse-circle-3 {
-      animation: pulse 2s ease-out infinite;
-      animation-delay: 0.8s;
+    /* Selection highlight matching the accent color */
+    ::selection {
+      background: #7C3AED;
+      color: white;
     }
   </style>
 </head>
