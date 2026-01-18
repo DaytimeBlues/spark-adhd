@@ -1,32 +1,29 @@
 export const colors = {
-    background: "#1A1A2E", // Deep Dark Blue
-    surface: "#2D2D44",
-    surfaceHighlight: "#3D3D58",
+    // Reference: Very deep midnight palette
+    background: "#0F111A",
+    surface: "#161925",
+    surfaceHighlight: "#1C2030",
 
-    // Glassmorphism
-    glass: {
-        background: "rgba(255, 255, 255, 0.05)",
-        border: "rgba(255, 255, 255, 0.1)",
-        text: "rgba(255, 255, 255, 0.9)",
-        textMuted: "rgba(255, 255, 255, 0.6)",
-    },
+    // Electric Accents
+    accent: "#7C3AED",     // Vibrant Purple
+    danger: "#EF4444",
+    success: "#10B981",
 
-    // Semantic Palette (Spark)
-    palette: {
-        ignite: "#FF6B6B",    // Red/Coral
-        fogcutter: "#4ECDC4", // Teal
-        pomodoro: "#FFBD69",  // Orange
-        anchor: "#45B7D1",    // Blue
-        checkin: "#A06EE1",   // Purple
-        crisis: "#EF476F",    // Pink/Red Warning
-    },
-
+    // Text
     text: "#FFFFFF",
-    textMuted: "#888888",
-    textFaint: "#666666",
-    accent: "#A06EE1", // Updated to cleaner Purple
-    danger: "#FF6B6B",
-    border: "rgba(255,255,255,0.1)", // Subtle border
+    textMuted: "#94A3B8",  // Slate 400
+    textFaint: "#475569",  // Slate 600
+    border: "rgba(255, 255, 255, 0.05)",
+
+    // Mode Palette (restored with deeper tones)
+    palette: {
+        ignite: "#F87171",    // Soft Red
+        fogcutter: "#2DD4BF", // Teal
+        pomodoro: "#FB923C",  // Orange
+        anchor: "#38BDF8",    // Blue
+        checkin: "#A78BFA",   // Lavender
+        crisis: "#F43F5E",    // Rose
+    },
 } as const;
 
 export const spacing = {
@@ -42,6 +39,6 @@ export const spacing = {
 export const radius = {
     input: 12,
     button: 14,
-    card: 16,
+    card: 20, // Increased for that premium feel
     pill: 9999,
 } as const;

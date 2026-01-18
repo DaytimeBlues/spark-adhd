@@ -1,9 +1,6 @@
 /**
  * HeroStreak.web.tsx
- * Web-specific implementation: NO Reanimated import.
- * Renders static pulse circles instead of animated ones.
- * This file is automatically resolved by webpack when Platform.OS === 'web'
- * due to resolve.extensions order: ['.web.tsx', '.tsx']
+ * Web version of the refined Pro HeroStreak.
  */
 import React from "react";
 import { View, StyleSheet } from "react-native";
@@ -16,57 +13,22 @@ interface HeroStreakProps {
     streak: number;
 }
 
-// Animated pulse circle for web using CSS keyframes
-const PulseCircle = ({ index }: { index: number }) => {
-    // Use nativeID to apply CSS animation class (react-native-web converts to id)
-    // We need to use a wrapper div with className for CSS animation
-    return (
-        <View
-            testID="pulse-circle"
-            // @ts-ignore - nativeID maps to id on web
-            nativeID={`pulse-circle-${index + 1}`}
-            style={styles.pulse}
-        />
-    );
-};
-
 const HeroStreak = ({ streak }: HeroStreakProps) => {
-    const pulses = [0, 1, 2];
-
     return (
         <View style={styles.container}>
-            <GlassCard style={styles.card} variant="highlight">
+            <GlassCard style={styles.card}>
                 <View style={styles.content}>
-                    <AppText variant="sectionTitle" style={styles.label}>
-                        Current Streak
-                    </AppText>
-
-                    <View style={styles.flameContainer}>
-                        {/* Static pulse circles behind the flame */}
-                        {pulses.map((i) => (
-                            <PulseCircle key={i} index={i} />
-                        ))}
-
-                        <Icon
-                            name="fire"
-                            size={64}
-                            color={colors.palette.ignite}
-                            style={styles.icon}
-                        />
+                    <View style={styles.streakInfo}>
+                        <View style={styles.iconContainer}>
+                            <Icon name="fire" size={24} color={colors.palette.ignite} />
+                        </View>
+                        <View>
+                            <AppText variant="sectionTitle" style={styles.streakText}>
+                                {streak} day{streak !== 1 ? "s" : ""} streak
+                            </AppText>
+                            <AppText variant="smallMuted">Consistency is focus.</AppText>
+                        </View>
                     </View>
-
-                    <View style={styles.statsRow}>
-                        <AppText variant="screenTitle" style={styles.count}>
-                            {streak}
-                        </AppText>
-                        <AppText variant="body" style={styles.days}>
-                            days
-                        </AppText>
-                    </View>
-
-                    <AppText variant="smallMuted" style={styles.motivation}>
-                        You're on fire! Keep the momentum going.
-                    </AppText>
                 </View>
             </GlassCard>
         </View>
@@ -78,54 +40,29 @@ const styles = StyleSheet.create({
         marginBottom: spacing[24],
     },
     card: {
-        alignItems: "center",
-        paddingVertical: spacing[32],
+        padding: spacing[16],
+        backgroundColor: colors.surfaceHighlight,
     },
     content: {
+        flexDirection: "row",
         alignItems: "center",
     },
-    label: {
-        color: colors.glass.textMuted,
-        marginBottom: spacing[16],
-        textTransform: "uppercase",
-        letterSpacing: 2,
-        fontSize: 12,
+    streakInfo: {
+        flexDirection: "row",
+        alignItems: "center",
     },
-    flameContainer: {
-        width: 100,
-        height: 100,
+    iconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: colors.background,
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: spacing[16],
+        marginRight: spacing[16],
     },
-    icon: {
-        zIndex: 2,
-    },
-    pulse: {
-        position: "absolute",
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: "rgba(255, 107, 107, 0.2)",
-        zIndex: 1,
-    },
-    statsRow: {
-        flexDirection: "row",
-        alignItems: "baseline",
-        marginBottom: spacing[8],
-    },
-    count: {
-        fontSize: 48,
+    streakText: {
+        fontSize: 18,
         color: colors.text,
-        fontWeight: "bold",
-        marginRight: spacing[4],
-    },
-    days: {
-        fontSize: 20,
-        color: colors.glass.textMuted,
-    },
-    motivation: {
-        color: colors.glass.textMuted,
     },
 });
 
