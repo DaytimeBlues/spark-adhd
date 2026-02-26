@@ -11,7 +11,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HomeScreen = ({navigation}: any) => {
   const [streak, setStreak] = useState(0);
-  const [lastUse, setLastUse] = useState<string | null>(null);
 
   useEffect(() => {
     loadStreak();
@@ -20,12 +19,19 @@ const HomeScreen = ({navigation}: any) => {
   const loadStreak = async () => {
     try {
       const streakCount = await AsyncStorage.getItem('streakCount');
-      const lastUseDate = await AsyncStorage.getItem('lastUseDate');
       setStreak(streakCount ? parseInt(streakCount, 10) : 0);
-      setLastUse(lastUseDate);
     } catch (e) {
       console.log('Error loading streak:', e);
     }
+  };
+
+  const modeRoutes: Record<string, string> = {
+    checkin: 'CheckIn',
+    crisis: 'Crisis',
+    fogcutter: 'FogCutter',
+    pomodoro: 'Pomodoro',
+    anchor: 'Anchor',
+    ignite: 'Focus',
   };
 
   const modes = [
@@ -55,21 +61,7 @@ const HomeScreen = ({navigation}: any) => {
             <TouchableOpacity
               key={mode.id}
               style={styles.modeCard}
-              onPress={() => {
-                if (mode.id === 'checkin') {
-                  navigation.navigate('CheckIn');
-                } else if (mode.id === 'crisis') {
-                  navigation.navigate('Crisis');
-                } else if (mode.id === 'fogcutter') {
-                  navigation.navigate('FogCutter');
-                } else if (mode.id === 'pomodoro') {
-                  navigation.navigate('Pomodoro');
-                } else if (mode.id === 'anchor') {
-                  navigation.navigate('Anchor');
-                } else {
-                  navigation.navigate('Focus');
-                }
-              }}>
+              onPress={() => navigation.navigate(modeRoutes[mode.id] ?? 'Focus')}>
               <Text style={styles.modeIcon}>{mode.icon}</Text>
               <Text style={styles.modeName}>{mode.name}</Text>
               <Text style={styles.modeDesc}>{mode.desc}</Text>
