@@ -1,3 +1,4 @@
+import LoggerService from './LoggerService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const STORAGE_KEYS = {
@@ -13,7 +14,7 @@ const StorageService = {
     try {
       return await AsyncStorage.getItem(key);
     } catch (error) {
-      console.error('Storage get error:', error);
+      LoggerService.error('Storage get failed', error, {service: 'StorageService', action: 'get', key});
       return null;
     }
   },
@@ -23,7 +24,7 @@ const StorageService = {
       await AsyncStorage.setItem(key, value);
       return true;
     } catch (error) {
-      console.error('Storage set error:', error);
+      LoggerService.error('Storage set failed', error, {service: 'StorageService', action: 'set', key});
       return false;
     }
   },
@@ -33,7 +34,7 @@ const StorageService = {
       await AsyncStorage.removeItem(key);
       return true;
     } catch (error) {
-      console.error('Storage remove error:', error);
+      LoggerService.error('Storage remove failed', error, {service: 'StorageService', action: 'remove', key});
       return false;
     }
   },
@@ -43,7 +44,7 @@ const StorageService = {
       const value = await this.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error('Storage getJSON error:', error);
+      LoggerService.error('Storage getJSON parse failed', error, {service: 'StorageService', action: 'getJSON', key});
       return null;
     }
   },
@@ -52,7 +53,7 @@ const StorageService = {
     try {
       return await this.set(key, JSON.stringify(value));
     } catch (error) {
-      console.error('Storage setJSON error:', error);
+      LoggerService.error('Storage setJSON serialization failed', error, {service: 'StorageService', action: 'setJSON', key});
       return false;
     }
   },
