@@ -1,3 +1,4 @@
+import LoggerService from './LoggerService';
 import Sound from 'react-native-sound';
 
 let brownNoise: Sound | null = null;
@@ -6,7 +7,7 @@ const SoundService = {
   async initBrownNoise() {
     brownNoise = new Sound('brown_noise.mp3', Sound.MAIN_BUNDLE, error => {
       if (error) {
-        console.error('Failed to load brown noise:', error);
+        LoggerService.error('Failed to load brown noise', error, {service: 'SoundService', action: 'initBrownNoise'});
       }
     });
   },
@@ -17,7 +18,7 @@ const SoundService = {
       brownNoise.setVolume(0.5);
       brownNoise.play(success => {
         if (!success) {
-          console.error('Brown noise playback failed');
+          LoggerService.error('Brown noise playback failed', undefined, {service: 'SoundService', action: 'playBrownNoise'});
         }
       });
     }
