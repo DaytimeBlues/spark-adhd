@@ -26,3 +26,12 @@ Thumbs.db
 test-results/
 playwright-report/
 coverage/
+
+# Debug / output artifacts
+dump_console.cjs
+jest_full_log.txt
+*_output.txt
+
+# Research / binary docs (store externally)
+docs/*.pdf
+docs/*.docx
